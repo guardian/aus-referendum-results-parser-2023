@@ -20,8 +20,9 @@ import time
 print("CHANGE TO mediafeed.aec.gov.au ON ELECTION NIGHT JFC")
 
 verbose = False
-feedtest = True
+feedtest = False
 resultsTest = False
+testS3 = False
 
 print("Results testing", resultsTest)
 electionID = '29581'
@@ -174,9 +175,9 @@ def parse_results(test):
 # Use scheduler to time function every 2 minutes
 
 # if not resultsTest:
-parse_results(True)
+parse_results(testS3)
 
-schedule.every(2).minutes.do(parse_results,True)
+schedule.every(2).minutes.do(parse_results,testS3)
 
 while True:
     schedule.run_pending()
