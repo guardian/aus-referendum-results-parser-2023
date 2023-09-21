@@ -128,16 +128,15 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 	newJson = json.dumps(results_json, indent=4)
 	summaryJson = json.dumps(summary_json, indent=4)
 
-
 	# Save the file locally
 
-	with open('{timestamp}.json'.format(timestamp=timestamp),'w') as fileOut:
-		print("saving results locally")
-		fileOut.write(newJson)		
+	# with open('{timestamp}.json'.format(timestamp=timestamp),'w') as fileOut:
+	# 	print("saving results locally")
+	# 	fileOut.write(newJson)		
 
-	with open('summaryResults.json','w') as fileOut:
-		print("saving results locally")
-		fileOut.write(summaryJson)		
+	# with open('summaryResults.json','w') as fileOut:
+	# 	print("saving results locally")
+	# 	fileOut.write(summaryJson)		
 
 	print("Connecting to S3")
 	bucket = 'gdn-cdn'
