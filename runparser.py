@@ -17,7 +17,7 @@ print("CHANGE TO mediafeed.aec.gov.au ON ELECTION NIGHT JFC")
 # Toggle extra logging
 verbose = False
 # Toggle AEC ftp archive or live ftp
-archive = True
+archive = False
 # This setting simulates and election night with old data
 resultsTest = False
 # Appends "-test" to json output files
