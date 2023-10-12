@@ -2,6 +2,7 @@ import json
 import xmltodict
 import boto3
 import os
+from datetime import datetime
 
 AWS_KEY = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET = os.environ['AWS_SECRET_ACCESS_KEY']
@@ -23,7 +24,8 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 	states_list = []
 	electorates_list = []
 	results_json = {}
-	summary_json = {}
+
+	# summary_json = {}
 	# swing_list = []
 	# electorates_list = []
 
@@ -44,22 +46,22 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 	# Formal votes counted
 	# MediaFeed.Results.Election.Referendum.Contests.Contest.ProposalResults.Formal
 	national_json['votesFormal'] = int(ref_results['ProposalResults']['Formal']['Votes']["#text"])
-	national_json['votesFormalPercent'] = int(ref_results['ProposalResults']['Formal']['Votes']["@Percentage"])
+	national_json['votesFormalPercent'] = float(ref_results['ProposalResults']['Formal']['Votes']["@Percentage"])
 
 	# Informal votes
 	national_json['votesInformal'] = int(ref_results['ProposalResults']['Informal']['Votes']["#text"])
-	national_json['votesInformalPercent'] = int(ref_results['ProposalResults']['Informal']['Votes']["@Percentage"])
+	national_json['votesInformalPercent'] = float(ref_results['ProposalResults']['Informal']['Votes']["@Percentage"])
 
 	# Yes and No votes
 	# MediaFeed.Results.Election.Referendum.Contests.Contest.ProposalResults.Option
 	for option in ref_results['ProposalResults']['Option']:
 		if option['eml:ReferendumOptionIdentifier']['#text'] == "Yes":
 			national_json['votesYes'] = int(option['Votes']['#text'])
-			national_json['votesYesPercent'] = int(option['Votes']['@Percentage'])
+			national_json['votesYesPercent'] = float(option['Votes']['@Percentage'])
 
 		elif option['eml:ReferendumOptionIdentifier']['#text'] == "No":
 			national_json['votesNo'] = int(option['Votes']['#text'])
-			national_json['votesNoPercent'] = int(option['Votes']['@Percentage'])
+			national_json['votesNoPercent'] = float(option['Votes']['@Percentage'])
 		
 	# Electorate level results
 	# MediaFeed.Results.Election.Referendum.Contests.Contest.PollingDistricts.PollingDistrict
@@ -80,11 +82,11 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 
 			if option['eml:ReferendumOptionIdentifier']['#text'] == "Yes":
 				electorates_json['votesYes'] = int(option['Votes']['#text'])
-				electorates_json['votesYesPercent'] = int(option['Votes']['@Percentage'])
+				electorates_json['votesYesPercent'] = float(option['Votes']['@Percentage'])
 
 			elif option['eml:ReferendumOptionIdentifier']['#text'] == "No":
 				electorates_json['votesNo'] = int(option['Votes']['#text'])
-				electorates_json['votesNoPercent'] = int(option['Votes']['@Percentage'])
+				electorates_json['votesNoPercent'] = float(option['Votes']['@Percentage'])
 
 		electorates_json['votesInformal'] = int(electorate['ProposalResults']['Informal']['Votes']['#text'])
 		electorates_json['votesInformalPercent'] = float(electorate['ProposalResults']['Informal']['Votes']['@Percentage'])
@@ -106,11 +108,11 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 
 			if option['eml:ReferendumOptionIdentifier']['#text'] == "Yes":
 				state_json['votesYes'] = int(option['Votes']['#text'])
-				state_json['votesYesPercent'] = int(option['Votes']['@Percentage'])
+				state_json['votesYesPercent'] = float(option['Votes']['@Percentage'])
 
 			elif option['eml:ReferendumOptionIdentifier']['#text'] == "No":
 				state_json['votesNo'] = int(option['Votes']['#text'])
-				state_json['votesNoPercent'] = int(option['Votes']['@Percentage'])
+				state_json['votesNoPercent'] = float(option['Votes']['@Percentage'])
 
 		state_json['votesInformal'] = int(state['ProposalResults']['Informal']['Votes']['#text'])
 		state_json['votesInformalPercent'] = float(state['ProposalResults']['Informal']['Votes']['@Percentage'])
@@ -120,23 +122,31 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 
 	results_json['national'] = national_json
 	results_json['states'] = states_list
-	results_json['electorates'] = electorates_list
 
-	summary_json['national'] = national_json
-	summary_json['states'] = states_list
-
-	newJson = json.dumps(results_json, indent=4)
-	summaryJson = json.dumps(summary_json, indent=4)
+	newResultsJson = json.dumps(results_json, indent=4)
+	newElecJson = json.dumps(electorates_list, indent=4)
 
 	# Save the file locally
 
-	# with open('{timestamp}.json'.format(timestamp=timestamp),'w') as fileOut:
+	# with open('{timestamp}-national.json'.format(timestamp=timestamp),'w') as fileOut:
 	# 	print("saving results locally")
-	# 	fileOut.write(newJson)		
+	# 	fileOut.write(newResultsJson)
+
+	# with open('{timestamp}-electorates.json'.format(timestamp=timestamp),'w') as fileOut:
+	# 	print("saving results locally")
+	# 	fileOut.write(newElecJson)			
 
 	# with open('summaryResults.json','w') as fileOut:
 	# 	print("saving results locally")
-	# 	fileOut.write(summaryJson)		
+	# 	fileOut.write(newResultsJson)		
+
+	uploadJson(timestamp, test, newResultsJson, "-national")
+	uploadJson(timestamp, test, newElecJson, "-electorates")
+	uploadJson("", test, newResultsJson, "summaryResults")
+	update_time = datetime.strftime(datetime.strptime(timestamp,"%Y%m%d%H%M%S"), "%H:%M:%S")
+	print(f"Last data update: {update_time}, Votes counted: {national_json['votesCountedPercent']}")
+
+def uploadJson(timestamp, test, jsonObj, keyStr):
 
 	print("Connecting to S3")
 	bucket = 'gdn-cdn'
@@ -159,18 +169,11 @@ def eml_to_JSON(eml_file,local,timestamp, test):
 	if test:
 		testStr = '-test'
 
-	key = "2023/09/aus-referendum/results-data/{timestamp}{testStr}.json".format(timestamp=timestamp, testStr=testStr)
+	key = "2023/09/aus-referendum/results-data/{timestamp}{keyStr}{testStr}.json".format(timestamp=timestamp, testStr=testStr, keyStr=keyStr)
 	object = s3.Object(bucket, key)
-	object.put(Body=newJson, CacheControl="max-age=60", ACL='public-read', ContentType="application/json")
-	print("Done")
+	object.put(Body=jsonObj, CacheControl="max-age=60", ACL='public-read', ContentType="application/json")
 
-
-	key2 = "2023/09/aus-referendum/results-data/summaryResults{testStr}.json".format(testStr=testStr)	
-	object = s3.Object(bucket, key2)
-	object.put(Body=summaryJson, CacheControl="max-age=60", ACL='public-read', ContentType="application/json")
-	print("Done")
-
-	print("Done, JSON is uploaded")
+	print(f"Done, {keyStr} JSON is uploaded")
 
 # eml_to_JSON(eml_file,local,timestamp, test):
-# eml_to_JSON('aec-mediafeed-results-standard-verbose-29581.xml',True,'20220518111214',False)
+# eml_to_JSON('aec-mediafeed-results-standard-verbose-29581.xml',True,'20230921194654',True)

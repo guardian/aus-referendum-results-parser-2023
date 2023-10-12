@@ -10,30 +10,30 @@ import emlparse
 import logresults
 import schedule
 import time
-
-#Generates a list of zip files from the AEC
-# 2013 id = '17496'
-# 2016 address = results.aec.gov.au
-# 2016 id = '20499'
-# 2016 address = mediafeed.aec.gov.au
+import ticker
 
 print("CHANGE TO mediafeed.aec.gov.au ON ELECTION NIGHT JFC")
 
+# Toggle extra logging
 verbose = False
-feedtest = False
+# Toggle AEC ftp archive or live ftp
+archive = True
+# This setting simulates and election night with old data
 resultsTest = False
+# Appends "-test" to json output files
 testS3 = False
 
 print("Results testing", resultsTest)
 electionID = '29581'
+
+# Liveblog ID f
+liveblogID = "/australia-news/live/2023/oct/10/australia-news-live-indigenous-voice-israel-gaza-energy-power-bills-cost-of-living"
 testTime = datetime.strptime("2019-05-18 23:00","%Y-%m-%d %H:%M")
 path = '/{electionID}/Standard/Verbose/'.format(electionID=electionID)
 
-if feedtest:
-	print("yeh")
+if archive:
 	ftpPath = 'mediafeedarchive.aec.gov.au'
 else:
-	print("nah")
 	ftpPath = 'mediafeed.aec.gov.au'	
 
 print("using ", ftpPath)
@@ -78,7 +78,7 @@ def parse_results(test):
 	if verbose:
 		print(my_files)
 
-	#Get latest timestamp
+	# Get latest timestamp
 
 	print("Getting latest timestamp")
 
@@ -139,6 +139,7 @@ def parse_results(test):
 
 			emlparse.eml_to_JSON(content,False,latestTimestampStr,test)
 			logresults.saveRecentResults(latestTimestampStr, test)
+			
 
 		if latestTimestampStr in recentResults:
 			print("{timestamp} has already been saved".format(timestamp=latestTimestampStr))
@@ -172,12 +173,17 @@ def parse_results(test):
 	print("Done, results all saved")
 	ftp.quit()
 
+def updateTicker():
+	ticker.getLatest(liveblogID)
+
 # Use scheduler to time function every 2 minutes
 
 # if not resultsTest:
 parse_results(testS3)
+updateTicker()
 
 schedule.every(2).minutes.do(parse_results,testS3)
+schedule.every(2).minutes.do(updateTicker)
 
 while True:
     schedule.run_pending()
