@@ -4,3 +4,4 @@ __pycache__
 *.xml
 /venv
 /test-data
+/test-data2

@@ -27,7 +27,7 @@ print("Results testing", resultsTest)
 electionID = '29581'
 
 # Liveblog ID f
-liveblogID = "/australia-news/live/2023/oct/10/australia-news-live-indigenous-voice-israel-gaza-energy-power-bills-cost-of-living"
+liveblogID = "/australia-news/live/2023/oct/14/voice-referendum-2023-live-updates-australia-latest-news-yes-no-vote-winner-results-australian-indigenous-voice-to-parliament-polls"
 testTime = datetime.strptime("2019-05-18 23:00","%Y-%m-%d %H:%M")
 path = '/{electionID}/Standard/Verbose/'.format(electionID=electionID)
 
