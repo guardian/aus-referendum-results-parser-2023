@@ -25,8 +25,8 @@ def getLatest(article_key):
 		blocks = results['response']['content']['blocks']['requestedBodyBlocks']["body:latest:10"]
 		for block in blocks:
 			labelText = block['bodyTextSummary']
-			if len(labelText) > 40:
-				labelText = block['bodyTextSummary'][:40] + "..."
+			if len(labelText) > 50:
+				labelText = block['bodyTextSummary'][:50] + "..."
 			
 			block_id = block['id']
 			url = f"https://www.theguardian.com/{article_key}?page=with:block-{block_id}#block-{block_id}"
@@ -62,5 +62,5 @@ def getLatest(article_key):
 	object.put(Body=newJsonOutput, CacheControl="max-age=60", ACL='public-read', ContentType="application/json")
 	print("Ticker updated")
 
-# test = "/australia-news/live/2023/oct/04/australia-news-live-patrick-dodson-noel-pearson-indigenous-voice-to-parliament-referendum-fire-victoria-nsw-bega-floods"
+# test = "/australia-news/live/2023/oct/14/voice-referendum-2023-live-updates-australia-latest-news-yes-no-vote-winner-results-australian-indigenous-voice-to-parliament-polls"
 # getLatest(test)
